@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Multimedia Knowledge Assistant</title>
+
+<style>
+:root {
+    --bg: #f7f8fc;
+    --surface: #ffffff;
+    --text: #202235;
+    --muted: #777b91;
+    --border: #e7e8f0;
+    --primary: #6257e8;
+    --primary-light: #eeecff;
+    --success: #16865b;
+    --radius: 14px;
+    --folder: #f2bf55;
+    --folder-dark: #dca438;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+svg {
+    display: block;
+    flex-shrink: 0;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.icon-sm { width: 16px; height: 16px; }
+.icon-lg { width: 25px; height: 25px; }
+
+.app {
+    display: grid;
+    grid-template-columns: 255px minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+/* SVG icon definitions */
+
+.icon-definitions {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.folder-icon {
+    width: 23px;
+    height: 21px;
+    flex-shrink: 0;
+}
+
+.folder-icon.large {
+    width: 39px;
+    height: 35px;
+}
+
+.brand-symbol {
+    width: 23px;
+    height: 23px;
+}
+
+/* Sidebar */
+
+.sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 25px 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 0 7px;
+}
+
+.brand-icon {
+    width: 39px;
+    height: 39px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    display: grid;
+    place-items: center;
+}
+
+.brand-name { font-weight: 750; font-size: 14px; line-height: 1.4; }
+.brand-subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.side-label {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    padding: 0 9px;
+    margin-bottom: 10px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 11px 12px;
+    border-radius: 9px;
+    color: #555970;
+    text-align: left;
+    font-size: 13px;
+    margin-bottom: 3px;
+}
+
+.nav-item:hover { background: #f5f4ff; }
+
+.nav-item.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 650;
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.collection-list { display: flex; flex-direction: column; gap: 4px; }
+
+.collection-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: left;
+    color: #555970;
+    font-size: 12px;
+}
+
+.collection-item:hover,
+.collection-item.active { background: #f3f3fa; }
+
+.collection-item.active { color: var(--primary); }
+
+.collection-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.collection-count {
+    margin-left: auto;
+    color: #999caf;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.sidebar-bottom {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding: 17px 7px 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+/* Main layout */
+
+.main { min-width: 0; }
+
+.topbar {
+    min-height: 76px;
+    background: rgba(255,255,255,.85);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 17px 34px;
+    gap: 20px;
+}
+
+.page-title { font-size: 18px; font-weight: 750; }
+
+.page-subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.status {
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.status::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: #27ae78;
+    border-radius: 50%;
+    margin-right: 7px;
+}
+
+.content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 34px 60px;
+}
+
+.section-heading {
+    font-size: 21px;
+    font-weight: 760;
+    letter-spacing: -.4px;
+    margin: 0 0 7px;
+}
+
+.section-description {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+}
+
+.hidden { display: none !important; }
+
+/* Import cards */
+
+.import-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 24px;
+}
+
+.import-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    min-width: 0;
+    transition: border-color .15s, transform .15s;
+}
+
+.import-card:hover {
+    border-color: #c9c4ff;
+    transform: translateY(-2px);
+}
+
+.import-card.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px #eeecff;
+}
+
+.source-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 16px;
+}
+
+.youtube-icon { background: #fff0f0; color: #ff0033; }
+.local-icon { background: #eaf6ff; color: #2778bd; }
+.instagram-icon {
+    background: #fff0f7;
+    color: #c13584;
+}
+
+.youtube-logo {
+    width: 25px;
+    height: 19px;
+}
+
+.instagram-logo {
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.local-video-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.import-card h3 { font-size: 15px; margin: 0 0 8px; }
+
+.import-card p {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    min-height: 57px;
+    margin: 0 0 18px;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 15px;
+    font-size: 12px;
+    font-weight: 650;
+    transition: background .15s, border-color .15s;
+}
+
+.button-primary { color: white; background: var(--primary); }
+.button-primary:hover { background: #5045d4; }
+
+.button-secondary { color: #4e5067; background: #f1f1f7; }
+.button-secondary:hover { background: #e8e8f2; }
+
+.button-outline {
+    color: var(--primary);
+    background: white;
+    border: 1px solid #d8d4ff;
+}
+
+.button-outline:hover { background: #f8f7ff; }
+
+.button-full { width: 100%; }
+
+/* Forms */
+
+.import-form {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 22px;
+}
+
+.form-title { font-size: 15px; font-weight: 750; margin-bottom: 6px; }
+
+.form-description {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 18px;
+}
+
+.form-row { display: flex; gap: 12px; margin-bottom: 15px; }
+
+.form-group { flex: 1; min-width: 0; margin-bottom: 15px; }
+
+label {
+    display: block;
+    font-size: 12px;
+    font-weight: 650;
+    margin-bottom: 8px;
+}
+
+input[type="text"],
+input[type="url"],
+textarea,
+select {
+    width: 100%;
+    border: 1px solid #dfe0eb;
+    background: white;
+    color: var(--text);
+    border-radius: 9px;
+    padding: 12px;
+    font-size: 12px;
+    outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px #efedff;
+}
+
+textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
+
+input[type="file"] {
+    width: 100%;
+    padding: 13px;
+    background: #fafaff;
+    border: 1px dashed #cfd0e0;
+    border-radius: 9px;
+    font-size: 12px;
+}
+
+.helper {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-top: 7px;
+}
+
+.message {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 9px;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+.message.info { background: #f0efff; color: #5045ad; }
+.message.success { background: #eaf8f0; color: #176e4b; }
+.message.error { background: #fff0f0; color: #a33434; }
+
+/* Question area */
+
+.ask-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(250px, .8fr);
+    gap: 18px;
+    margin-top: 30px;
+    align-items: start;
+}
+
+.ask-box { margin-top: 18px; }
+
+.ask-box textarea {
+    min-height: 100px;
+    border: 0;
+    padding: 4px 0;
+    box-shadow: none;
+    font-size: 14px;
+}
+
+.ask-box textarea:focus { box-shadow: none; }
+
+.ask-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+}
+
+.ask-hint { color: var(--muted); font-size: 11px; }
+
+.answer-box { margin-top: 22px; }
+
+.answer-label {
+    font-size: 11px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.answer-text {
+    font-size: 14px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 17px;
+}
+
+.source-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.source-name { font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+
+.source-time { color: var(--primary); font-size: 11px; margin-top: 6px; }
+
+.source-text {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.7;
+    margin-top: 8px;
+}
+
+.source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 650;
+    text-decoration: none;
+}
+
+.source-link:hover { text-decoration: underline; }
+
+.empty-state { color: var(--muted); font-size: 12px; line-height: 1.7; padding: 15px 0; }
+
+/* Collections view */
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 23px;
+}
+
+.collection-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 19px;
+    transition: border-color .15s, transform .15s;
+}
+
+.collection-card:hover {
+    border-color: #d5d1ff;
+    transform: translateY(-2px);
+}
+
+.collection-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    min-width: 0;
+}
+
+.collection-card h3 {
+    font-size: 14px;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.collection-meta { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+.collection-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.collection-actions .button { padding: 9px 11px; }
+
+/* Responsive */
+
+@media (max-width: 950px) {
+    .import-grid, .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ask-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 650px) {
+    .app { grid-template-columns: 1fr; }
+
+    .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 14px;
+        gap: 15px;
+    }
+
+    .sidebar-bottom { display: none; }
+    .sidebar nav { display: flex; flex-wrap: wrap; }
+    .sidebar nav .nav-item { width: auto; margin: 0; }
+    .sidebar .collection-section { display: none; }
+
+    .topbar { padding: 16px; }
+    .content { padding: 22px 15px 40px; }
+
+    .import-grid, .collection-grid { grid-template-columns: 1fr; }
+
+    .form-row { flex-direction: column; gap: 8px; }
+    .panel { padding: 17px; }
+    .status { white-space: normal; text-align: right; }
+
+    .ask-actions { align-items: flex-start; flex-direction: column; }
+    .ask-actions .button { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Reusable inline SVG icons -->
+<svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-home" viewBox="0 0 24 24">
+        <path d="m3 10 9-7 9 7"></path>
+        <path d="M5 9v11h14V9"></path>
+        <path d="M9 20v-7h6v7"></path>
+    </symbol>
+
+    <symbol id="icon-library" viewBox="0 0 24 24">
+        <path d="M4 4h16v16H4z"></path>
+        <path d="M8 4v16M12 4v16M16 4v16"></path>
+    </symbol>
+
+    <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14"></path>
+    </symbol>
+
+    <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+        <path d="m16 16 5 5"></path>
+    </symbol>
+
+    <symbol id="icon-send" viewBox="0 0 24 24">
+        <path d="m22 2-7 20-4-9-9-4Z"></path>
+        <path d="M22 2 11 13"></path>
+    </symbol>
+
+    <symbol id="icon-external" viewBox="0 0 24 24">
+        <path d="M14 4h6v6"></path>
+        <path d="M20 4 10 14"></path>
+        <path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"></path>
+    </symbol>
+
+    <symbol id="icon-video" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+        <path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none"></path>
+    </symbol>
+
+    <symbol id="icon-audio" viewBox="0 0 24 24">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+    </symbol>
+
+    <symbol id="icon-folder" viewBox="0 0 40 32">
+        <path d="M2 7.5A3.5 3.5 0 0 1 5.5 4h10l4 4H34.5A3.5 3.5 0 0 1 38 11.5v15a3.5 3.5 0 0 1-3.5 3.5h-29A3.5 3.5 0 0 1 2 26.5z"
+              fill="#F2BF55" stroke="#DCA438" stroke-width="1"></path>
+        <path d="M2 12h36l-3 14.5a3.5 3.5 0 0 1-3.4 2.5H6.5a3.5 3.5 0 0 1-3.4-2.7z"
+              fill="#FFD778"></path>
+        <path d="M2 12h36" stroke="#E5B347" stroke-width="1"></path>
+    </symbol>
+
+    <symbol id="icon-folder-plus" viewBox="0 0 40 32">
+        <path d="M2 7.5A3.5 3.5 0 0 1 5.5 4h10l4 4H34.5A3.5 3.5 0 0 1 38 11.5v15a3.5 3.5 0 0 1-3.5 3.5h-29A3.5 3.5 0 0 1 2 26.5z"
+              fill="#F2BF55" stroke="#DCA438" stroke-width="1"></path>
+        <path d="M2 12h36l-3 14.5a3.5 3.5 0 0 1-3.4 2.5H6.5a3.5 3.5 0 0 1-3.4-2.7z"
+              fill="#FFD778"></path>
+        <circle cx="29" cy="19" r="7" fill="#fff" stroke="#DCA438" stroke-width="1"></circle>
+        <path d="M29 15v8M25 19h8" stroke="#B27B19" stroke-width="1.8" stroke-linecap="round"></path>
+    </symbol>
+</svg>
+
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg class="brand-symbol" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                    <path d="M8 8h8v8H8z"></path>
+                    <path d="m10 10 5 2-5 2z" fill="currentColor" stroke="none"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-name">Multimedia Assistant</div>
+                <div class="brand-subtitle">Your searchable knowledge library</div>
+            </div>
+        </div>
+
+        <nav>
+            <button class="nav-item active" data-view="home" onclick="showView('home')">
+                <span class="nav-icon">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                </span>
+                Home
+            </button>
+
+            <button class="nav-item" data-view="collections" onclick="showView('collections')">
+                <span class="nav-icon">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-library"></use></svg>
+                </span>
+                My collections
+            </button>
+        </nav>
+
+        <div class="collection-section">
+            <div class="side-label">Your collections</div>
+
+            <div id="sidebarCollections" class="collection-list">
+                <div class="empty-state">Your collections will appear here.</div>
+            </div>
+
+            <button class="nav-item" onclick="openCreateCollection()">
+                <span class="nav-icon">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                </span>
+                New collection
+            </button>
+        </div>
+
+        <div class="sidebar-bottom">
+            Ask questions about your saved content and revisit the original sources.
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <div class="page-title" id="pageTitle">Your knowledge library</div>
+                <div class="page-subtitle" id="pageSubtitle">
+                    Bring your saved videos together and ask questions about them.
+                </div>
+            </div>
+            <div class="status">Personal workspace</div>
+        </header>
+
+        <div class="content">
+            <section id="homeView">
+                <h1 class="section-heading">Bring your content together</h1>
+                <p class="section-description">
+                    Import videos from different sources, organize them into collections,
+                    and search their content using natural language.
+                </p>
+
+                <div class="import-grid">
+                    <article class="import-card" id="card-youtube">
+                        <div class="source-icon youtube-icon">
+                            <svg class="youtube-logo" viewBox="0 0 24 18"
+                                 aria-label="YouTube" role="img">
+                                <rect x="1" y="1" width="22" height="16" rx="5" fill="#FF0033"></rect>
+                                <path d="M10 5.2 16 9l-6 3.8z" fill="#FFFFFF"></path>
+                            </svg>
+                        </div>
+
+                        <h3>YouTube</h3>
+                        <p>
+                            Import YouTube playlists, including private playlists your
+                            connected Google account is authorized to access.
+                        </p>
+
+                        <button class="button button-outline button-full"
+                                onclick="selectImporter('youtube')">
+                            Import YouTube
+                        </button>
+                    </article>
+
+                    <article class="import-card" id="card-local">
+                        <div class="source-icon local-icon">
+                            <svg class="local-video-icon" viewBox="0 0 32 32"
+                                 fill="none" aria-hidden="true">
+                                <path d="M7 2.5h12l7 7V27a2.5 2.5 0 0 1-2.5 2.5h-14A2.5 2.5 0 0 1 7 27z"
+                                      fill="#FFFFFF" stroke="#4C91CA" stroke-width="1.5"></path>
+                                <path d="M19 2.5v7h7" stroke="#4C91CA" stroke-width="1.5"></path>
+                                <rect x="10" y="13" width="13" height="10" rx="2" fill="#D7ECFF"></rect>
+                                <path d="m15 15.5 5 2.5-5 2.5z" fill="#2778BD"></path>
+                            </svg>
+                        </div>
+
+                        <h3>Local folder</h3>
+                        <p>
+                            Process a video file from your computer using transcription
+                            and on-screen text extraction.
+                        </p>
+
+                        <button class="button button-outline button-full"
+                                onclick="selectImporter('local')">
+                            Add local video
+                        </button>
+                    </article>
+
+                    <article class="import-card" id="card-instagram">
+                        <div class="source-icon instagram-icon">
+                            <svg class="instagram-logo" viewBox="0 0 24 24"
+                                 aria-label="Instagram" role="img">
+                                <rect x="3" y="3" width="18" height="18" rx="6"></rect>
+                                <circle cx="12" cy="12" r="4"></circle>
+                                <circle cx="17.5" cy="6.8" r="1" fill="currentColor" stroke="none"></circle>
+                            </svg>
+                        </div>
+
+                        <h3>Instagram</h3>
+                        <p>
+                            Prepare collections of Reel links. Actual importing requires
+                            the Instagram backend integration.
+                        </p>
+
+                        <button class="button button-outline button-full"
+                                onclick="selectImporter('instagram')">
+                            Add Reel links
+                        </button>
+                    </article>
+                </div>
+
+                <!-- YOUTUBE IMPORT -->
+                <section id="youtubeForm" class="panel import-form hidden">
+                    <div class="form-title">Import YouTube content</div>
+                    <div class="form-description">
+                        Connect the Google account that can access the playlist.
+                        Import one playlist per collection. Transcript availability
+                        depends on whether the transcript service can access each video.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="youtubeCollectionName">Collection name</label>
+                        <input id="youtubeCollectionName" type="text"
+                               placeholder="e.g. Data Structures and Algorithms">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="youtubeUrls">YouTube playlist URL</label>
+                        <textarea id="youtubeUrls"
+                                  placeholder="https://www.youtube.com/playlist?list=..."></textarea>
+                        <div class="helper">
+                            Paste one playlist URL. Individual video URLs are not accepted
+                            by this playlist importer.
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <button class="button button-secondary" type="button"
+                                onclick="connectYouTube()">
+                            Connect YouTube account
+                        </button>
+
+                        <button id="youtubeImportButton"
+                                class="button button-primary" type="button"
+                                onclick="importUrls('youtube')">
+                            Import playlist
+                        </button>
+                    </div>
+
+                    <div id="youtubeMessage" aria-live="polite"></div>
+                </section>
+
+                <!-- INSTAGRAM IMPORT -->
+                <section id="instagramForm" class="panel import-form hidden">
+                    <div class="form-title">Create an Instagram collection</div>
+                    <div class="form-description">
+                        Paste multiple Reel URLs at once. You do not need to create
+                        a separate collection for each Reel.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instagramCollectionName">Collection name</label>
+                        <input id="instagramCollectionName" type="text"
+                               placeholder="e.g. Recipes to Try">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instagramUrls">Reel URLs</label>
+                        <textarea id="instagramUrls"
+                                  placeholder="Paste Reel URLs here, one per line"></textarea>
+                        <div class="helper">
+                            This form currently collects URLs only. Instagram importing
+                            is not yet connected to the backend.
+                        </div>
+                    </div>
+
+                    <button class="button button-primary" type="button"
+                            onclick="importUrls('instagram')">
+                        Create collection and import
+                    </button>
+
+                    <div id="instagramMessage" aria-live="polite"></div>
+                </section>
+
+                <!-- LOCAL IMPORT -->
+                <section id="localForm" class="panel import-form hidden">
+                    <div class="form-title">Add a local video</div>
+                    <div class="form-description">
+                        Select one video file. The existing backend transcribes it,
+                        extracts on-screen text, and indexes its content.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="localFiles">Video file</label>
+                        <input id="localFiles" type="file" accept="video/*">
+                        <div class="helper">
+                            This uses the existing single-video upload endpoint.
+                            Batch upload and collection assignment require backend support.
+                        </div>
+                    </div>
+
+                    <button id="uploadButton" class="button button-primary"
+                            type="button" onclick="uploadLocalVideo()">
+                        Upload and process video
+                    </button>
+
+                    <div id="localMessage" aria-live="polite"></div>
+                </section>
+
+                <!-- ASK -->
+                <div class="ask-layout">
+                    <section class="panel">
+                        <h2 class="section-heading" style="font-size:17px">
+                            Ask your content
+                        </h2>
+
+                        <p class="section-description">
+                            Find a specific detail or combine information from relevant videos.
+                        </p>
+
+                        <div class="ask-box">
+                            <label for="question">Your question</label>
+                            <textarea id="question"
+                                      placeholder="e.g. What food did she eat on the flight?"></textarea>
+
+                            <div class="form-group" style="margin-top:15px">
+                                <label for="questionCollection">Search scope</label>
+                                <select id="questionCollection">
+                                    <option value="">Default collection (My Videos)</option>
+                                </select>
+                                <div class="helper">
+                                    The default selection uses the backend's default collection.
+                                    Searching across every collection requires explicit backend support.
+                                </div>
+                            </div>
+
+                            <div class="ask-actions">
+                                <span class="ask-hint">
+                                    Answers should be grounded in your sources.
+                                </span>
+
+                                <button id="askButton" class="button button-primary"
+                                        type="button" onclick="askQuestion()">
+                                    Ask question
+                                    <svg class="icon icon-sm" aria-hidden="true">
+                                        <use href="#icon-send"></use>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="answerBox" class="answer-box hidden">
+                            <div class="answer-label">Answer</div>
+                            <div id="answerText" class="answer-text"></div>
+                        </div>
+
+                        <div id="askMessage" aria-live="polite"></div>
+                    </section>
+
+                    <aside class="panel">
+                        <h2 class="section-heading" style="font-size:17px">Sources</h2>
+                        <p class="section-description">
+                            Revisit the videos used to answer your question.
+                        </p>
+
+                        <div id="sourcesList" class="sources-list">
+                            <div class="empty-state">
+                                Sources will appear here after you ask a question.
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            <!-- COLLECTIONS VIEW -->
+            <section id="collectionsView" class="hidden">
+                <h1 class="section-heading">My collections</h1>
+                <p class="section-description">
+                    Organize your content by topic and source.
+                </p>
+
+                <div style="margin-top:20px">
+                    <button class="button button-primary" type="button"
+                            onclick="openCreateCollection()">
+                        <svg class="icon icon-sm" aria-hidden="true">
+                            <use href="#icon-folder-plus"></use>
+                        </svg>
+                        New collection
+                    </button>
+                </div>
+
+                <div id="collectionGrid" class="collection-grid"></div>
+
+                <div id="emptyCollections" class="empty-state">
+                    Your collections will appear here when collection management
+                    is connected to the backend.
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+
+let activeImporter = null;
+let collections = [];
+let selectedCollectionId = "";
+
+/* Navigation */
+
+function showView(view) {
+    document.getElementById("homeView").classList.toggle("hidden", view !== "home");
+    document.getElementById("collectionsView").classList.toggle("hidden", view !== "collections");
+
+    document.querySelectorAll(".nav-item[data-view]").forEach(button => {
+        button.classList.toggle("active", button.dataset.view === view);
+    });
+
+    document.getElementById("pageTitle").textContent =
+        view === "home" ? "Your knowledge library" : "My collections";
+
+    document.getElementById("pageSubtitle").textContent =
+        view === "home"
+            ? "Bring your saved videos together and ask questions about them."
+            : "Manage collections from your different content sources.";
+}
+
+/* Importer forms */
+
+function selectImporter(type) {
+    activeImporter = type;
+
+    ["youtube", "instagram", "local"].forEach(name => {
+        document.getElementById(name + "Form").classList.add("hidden");
+        document.getElementById("card-" + name).classList.remove("selected");
+    });
+
+    document.getElementById(type + "Form").classList.remove("hidden");
+    document.getElementById("card-" + type).classList.add("selected");
+
+    document.getElementById(type + "Form").scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+}
+
+function showMessage(elementId, message, type = "info") {
+    const element = document.getElementById(elementId);
+    element.className = "message " + type;
+    element.textContent = message;
+    element.classList.remove("hidden");
+}
+
+function clearMessage(elementId) {
+    const element = document.getElementById(elementId);
+    element.textContent = "";
+    element.className = "";
+}
+
+/* Local video upload */
+
+async function uploadLocalVideo() {
+    const fileInput = document.getElementById("localFiles");
+    const button = document.getElementById("uploadButton");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showMessage("localMessage", "Choose a video file first.", "error");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    button.disabled = true;
+    button.textContent = "Processing video...";
+
+    showMessage(
+        "localMessage",
+        "Uploading the video. Transcription and OCR may take some time."
+    );
+
+    try {
+        const response = await fetch(API_BASE + "/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(
+                typeof data.detail === "string" ? data.detail : "The upload failed."
+            );
+        }
+
+        showMessage(
+            "localMessage",
+            "Video processed successfully: " + (data.filename || file.name),
+            "success"
+        );
+
+        fileInput.value = "";
+        await loadCollections();
+    } catch (error) {
+        showMessage(
+            "localMessage",
+            "Could not process the video. Check that the FastAPI backend is running. " +
+            error.message,
+            "error"
+        );
+    } finally {
+        button.disabled = false;
+        button.textContent = "Upload and process video";
+    }
+}
+
+/* URL import */
+
+async function importUrls(source) {
+    const prefix = source === "youtube" ? "youtube" : "instagram";
+    const messageId = prefix + "Message";
+
+    const name = document
+        .getElementById(prefix + "CollectionName")
+        .value.trim();
+
+    const rawUrls = document.getElementById(prefix + "Urls").value;
+
+    const urls = [...new Set(
+        rawUrls.split(/\r?\n/)
+            .map(url => url.trim())
+            .filter(Boolean)
+    )];
+
+    if (!name) {
+        showMessage(messageId, "Enter a name for this collection.", "error");
+        return;
+    }
+
+    if (!urls.length) {
+        showMessage(messageId, "Paste at least one URL.", "error");
+        return;
+    }
+
+    const invalidUrl = urls.find(value => {
+        try {
+            const url = new URL(value);
+            return !["http:", "https:"].includes(url.protocol);
+        } catch {
+            return true;
+        }
+    });
+
+    if (invalidUrl) {
+        showMessage(messageId, "This does not look like a valid URL: " + invalidUrl, "error");
+        return;
+    }
+
+    if (source === "youtube") {
+        if (urls.length !== 1) {
+            showMessage(
+                messageId,
+                "Paste exactly one YouTube playlist URL per collection.",
+                "error"
+            );
+            return;
+        }
+
+        let playlistUrl;
+
+        try {
+            playlistUrl = new URL(urls[0]);
+        } catch {
+            showMessage(messageId, "Enter a valid YouTube playlist URL.", "error");
+            return;
+        }
+
+        const validHosts = [
+            "youtube.com",
+            "www.youtube.com",
+            "m.youtube.com"
+        ];
+
+        if (
+            !validHosts.includes(playlistUrl.hostname.toLowerCase()) ||
+            !playlistUrl.searchParams.get("list")
+        ) {
+            showMessage(
+                messageId,
+                "Enter a YouTube playlist URL containing a playlist ID. Individual video URLs are not supported.",
+                "error"
+            );
+            return;
+        }
+
+        await importYouTubePlaylist(
+            name,
+            urls[0],
+            document.getElementById("youtubeImportButton")
+        );
+        return;
+    }
+
+    showMessage(
+        messageId,
+        "Instagram URL importing is not connected yet. The backend needs an Instagram import endpoint before these Reel URLs can be processed.",
+        "error"
+    );
+}
+
+async function importYouTubePlaylist(name, playlistUrl, button) {
+    if (!button) {
+        showMessage(
+            "youtubeMessage",
+            "The YouTube import button could not be found. Reload the page and try again.",
+            "error"
+        );
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Importing...";
+
+    showMessage(
+        "youtubeMessage",
+        "Importing the playlist. Retrieving video information and available transcripts may take some time."
+    );
+
+    try {
+        const response = await fetch(API_BASE + "/youtube/import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: name,
+                playlist_url: playlistUrl
+            })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(
+                typeof data.detail === "string"
+                    ? data.detail
+                    : "The YouTube playlist could not be imported."
+            );
+        }
+
+        const summary = [
+            "Import finished.",
+            "Playlist: " + (data.youtube_playlist_title || name),
+            "Imported: " + (data.imported ?? 0),
+            "Transcripts indexed: " + (data.transcripts_indexed ?? 0),
+            "Metadata only: " + (data.metadata_only ?? 0),
+            "Failed: " + (data.failed ?? 0)
+        ].join("\n");
+
+        const allFailed =
+            Number(data.total) > 0 &&
+            Number(data.failed) === Number(data.total);
+
+        showMessage(
+            "youtubeMessage",
+            summary,
+            allFailed ? "error" : "success"
+        );
+
+        await loadCollections();
+
+        if (data.collection_id) {
+            selectedCollectionId = String(data.collection_id);
+
+            const select = document.getElementById("questionCollection");
+            select.value = selectedCollectionId;
+        }
+    } catch (error) {
+        showMessage(
+            "youtubeMessage",
+            "YouTube import failed: " + error.message +
+            " If this is a private playlist, connect the Google account that has permission to access it.",
+            "error"
+        );
+    } finally {
+        button.disabled = false;
+        button.textContent = "Import playlist";
+    }
+}
+
+function connectYouTube() {
+    window.location.href = API_BASE + "/youtube/connect";
+}
+
+/* Question answering */
+
+async function askQuestion() {
+    const query = document.getElementById("question").value.trim();
+    const button = document.getElementById("askButton");
+    const collectionId = document.getElementById("questionCollection").value;
+
+    if (!query) {
+        showMessage("askMessage", "Enter a question first.", "error");
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Searching...";
+    clearMessage("askMessage");
+
+    document.getElementById("answerBox").classList.add("hidden");
+    document.getElementById("sourcesList").replaceChildren();
+
+    const loading = document.createElement("div");
+    loading.className = "empty-state";
+    loading.textContent = "Searching indexed content...";
+    document.getElementById("sourcesList").appendChild(loading);
+
+    try {
+        const params = new URLSearchParams({ query });
+
+        if (collectionId) {
+            params.set("playlist_id", collectionId);
+        }
+
+        const response = await fetch(API_BASE + "/ask?" + params.toString());
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(
+                typeof data.detail === "string" ? data.detail : "The question request failed."
+            );
+        }
+
+        document.getElementById("answerText").textContent =
+            data.answer || "No answer was returned.";
+
+        document.getElementById("answerBox").classList.remove("hidden");
+        renderSources(Array.isArray(data.sources) ? data.sources : []);
+
+    } catch (error) {
+        showMessage(
+            "askMessage",
+            "Could not get an answer. Check that the FastAPI server is running. " +
+            error.message,
+            "error"
+        );
+
+        document.getElementById("sourcesList").replaceChildren();
+
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "Sources are unavailable.";
+        document.getElementById("sourcesList").appendChild(empty);
+    } finally {
+        button.disabled = false;
+        button.innerHTML = 'Ask question <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-send"></use></svg>';
+    }
+}
+
+/* Source citations */
+
+function formatTimestamp(seconds) {
+    if (seconds == null || !Number.isFinite(Number(seconds))) return "";
+
+    const total = Math.max(0, Math.floor(Number(seconds)));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+
+    return [hours, minutes, secs]
+        .map(value => String(value).padStart(2, "0"))
+        .join(":");
+}
+
+function renderSources(sources) {
+    const container = document.getElementById("sourcesList");
+    container.replaceChildren();
+
+    if (!Array.isArray(sources) || sources.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent =
+            "No source references were returned for this answer.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const groups = new Map();
+
+    sources.forEach((source, index) => {
+        const citationId = source.citation_id ?? index + 1;
+
+        const key = source.id != null
+            ? `id:${source.id}`
+            : source.source_url
+                ? `url:${source.source_url}`
+                : `file:${source.filename || source.title || "unknown"}:${index}`;
+
+        if (!groups.has(key)) {
+            groups.set(key, {
+                filename: source.filename || source.title || "Source video",
+                source_url: source.source_url || null,
+                excerpts: []
+            });
+        }
+
+        const group = groups.get(key);
+
+        if (!group.source_url && source.source_url) {
+            group.source_url = source.source_url;
+        }
+
+        group.excerpts.push({
+            citationId,
+            text: source.text || "",
+            start: source.start,
+            end: source.end,
+            startTimestamp: source.start_timestamp,
+            endTimestamp: source.end_timestamp
+        });
+    });
+
+    for (const group of groups.values()) {
+        const item = document.createElement("article");
+        item.className = "source-item";
+
+        const title = document.createElement("div");
+        title.className = "source-name";
+        title.textContent = group.filename;
+        item.appendChild(title);
+
+        group.excerpts.forEach(excerptData => {
+            const excerpt = document.createElement("div");
+            excerpt.style.marginTop = "12px";
+
+            const citation = document.createElement("div");
+            citation.className = "source-name";
+            citation.style.fontWeight = "600";
+            citation.textContent = `[${excerptData.citationId}]`;
+            excerpt.appendChild(citation);
+
+            const hasStart =
+                excerptData.start != null &&
+                Number.isFinite(Number(excerptData.start));
+
+            const hasEnd =
+                excerptData.end != null &&
+                Number.isFinite(Number(excerptData.end));
+
+            const start = excerptData.startTimestamp ||
+                (hasStart ? formatTimestamp(excerptData.start) : "");
+
+            const end = excerptData.endTimestamp ||
+                (hasEnd ? formatTimestamp(excerptData.end) : "");
+
+            const startIsZero = hasStart && Number(excerptData.start) === 0;
+            const endIsZero = hasEnd && Number(excerptData.end) === 0;
+
+            const hasRealTiming =
+                (hasStart && Number(excerptData.start) > 0) ||
+                (hasEnd && Number(excerptData.end) > 0) ||
+                (excerptData.startTimestamp && excerptData.startTimestamp !== "00:00:00") ||
+                (excerptData.endTimestamp && excerptData.endTimestamp !== "00:00:00");
+
+            if (hasRealTiming) {
+                const time = document.createElement("div");
+                time.className = "source-time";
+
+                if (start && end && !(startIsZero && endIsZero)) {
+                    time.textContent = `${start} – ${end}`;
+                } else {
+                    time.textContent = start || end;
+                }
+
+                excerpt.appendChild(time);
+            }
+
+            if (excerptData.text) {
+                const text = document.createElement("div");
+                text.className = "source-text";
+                text.textContent = excerptData.text;
+                excerpt.appendChild(text);
+            }
+
+            item.appendChild(excerpt);
+        });
+
+        if (group.source_url && isHttpUrl(group.source_url)) {
+            const link = document.createElement("a");
+            link.className = "source-link";
+            link.href = group.source_url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+
+            link.innerHTML = 'Open original video <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-external"></use></svg>';
+
+            const timedExcerpt = group.excerpts.find(excerptData =>
+                excerptData.start != null &&
+                Number.isFinite(Number(excerptData.start)) &&
+                Number(excerptData.start) > 0
+            );
+
+            if (timedExcerpt) {
+                try {
+                    const url = new URL(group.source_url);
+                    const seconds = Math.floor(Number(timedExcerpt.start));
+
+                    if (
+                        url.hostname === "youtube.com" ||
+                        url.hostname === "www.youtube.com" ||
+                        url.hostname === "m.youtube.com" ||
+                        url.hostname === "youtu.be"
+                    ) {
+                        url.searchParams.set("t", String(seconds));
+                        link.href = url.toString();
+                    }
+                } catch {
+                    // Keep the original URL if it cannot be adjusted.
+                }
+            }
+
+            item.appendChild(link);
+        } else {
+            const local = document.createElement("div");
+            local.className = "source-text";
+            local.textContent = "Original video link unavailable.";
+            item.appendChild(local);
+        }
+
+        container.appendChild(item);
+    }
+}
+
+function isHttpUrl(value) {
+    try {
+        const parsed = new URL(value);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+        return false;
+    }
+}
+
+/* Collections */
+
+async function loadCollections() {
+    try {
+        const response = await fetch(API_BASE + "/playlists");
+
+        if (!response.ok) {
+            throw new Error("Could not load collections.");
+        }
+
+        const data = await response.json();
+
+        collections = Array.isArray(data)
+            ? data
+            : Array.isArray(data.playlists) ? data.playlists : [];
+
+        renderCollections();
+    } catch (error) {
+        console.error("Collection loading failed:", error);
+    }
+}
+
+function renderCollections() {
+    const sidebar = document.getElementById("sidebarCollections");
+    const grid = document.getElementById("collectionGrid");
+    const select = document.getElementById("questionCollection");
+    const empty = document.getElementById("emptyCollections");
+
+    const previousSelection = selectedCollectionId || select.value;
+
+    sidebar.replaceChildren();
+    grid.replaceChildren();
+    select.replaceChildren();
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Default collection (My Videos)";
+    select.appendChild(defaultOption);
+
+    empty.classList.toggle("hidden", collections.length > 0);
+
+    collections.forEach(collection => {
+        const id = String(collection.id);
+        const name = collection.name || "Untitled collection";
+        const source = collection.source || "unknown";
+        const count = collection.video_count ?? collection.count ?? 0;
+
+        /* Sidebar collection */
+
+        const sideButton = document.createElement("button");
+        sideButton.className = "collection-item";
+        sideButton.type = "button";
+        sideButton.title = name;
+
+        if (id === previousSelection) {
+            sideButton.classList.add("active");
+        }
+
+        const folder = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        folder.setAttribute("viewBox", "0 0 40 32");
+        folder.setAttribute("class", "folder-icon");
+        folder.setAttribute("aria-hidden", "true");
+
+        const folderUse = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        folderUse.setAttribute("href", "#icon-folder");
+        folder.appendChild(folderUse);
+
+        const sideName = document.createElement("span");
+        sideName.className = "collection-item-name";
+        sideName.textContent = name;
+
+        const sideCount = document.createElement("span");
+        sideCount.className = "collection-count";
+        sideCount.textContent = String(count);
+
+        sideButton.append(folder, sideName, sideCount);
+
+        sideButton.onclick = () => {
+            selectedCollectionId = id;
+            select.value = id;
+
+            sidebar.querySelectorAll(".collection-item").forEach(button => {
+                button.classList.remove("active");
+            });
+
+            sideButton.classList.add("active");
+            showView("home");
+            document.getElementById("question").focus();
+        };
+
+        sidebar.appendChild(sideButton);
+
+        /* Search-scope option */
+
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = name;
+        select.appendChild(option);
+
+        /* Collection card */
+
+        const card = document.createElement("article");
+        card.className = "collection-card";
+
+        const top = document.createElement("div");
+        top.className = "collection-card-top";
+
+        const largeFolder = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        largeFolder.setAttribute("viewBox", "0 0 40 32");
+        largeFolder.setAttribute("class", "folder-icon large");
+        largeFolder.setAttribute("aria-hidden", "true");
+
+        const largeFolderUse = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        largeFolderUse.setAttribute("href", "#icon-folder");
+        largeFolder.appendChild(largeFolderUse);
+
+        const heading = document.createElement("h3");
+        heading.textContent = name;
+
+        top.append(largeFolder, heading);
+
+        const meta = document.createElement("div");
+        meta.className = "collection-meta";
+        meta.textContent = `${source} · ${count} video(s)`;
+
+        const actions = document.createElement("div");
+        actions.className = "collection-actions";
+
+        const askButton = document.createElement("button");
+        askButton.className = "button button-primary";
+        askButton.type = "button";
+        askButton.textContent = "Ask about this";
+
+        askButton.onclick = () => {
+            selectedCollectionId = id;
+            select.value = id;
+            showView("home");
+            document.getElementById("question").focus();
+        };
+
+        actions.appendChild(askButton);
+        card.append(top, meta, actions);
+        grid.appendChild(card);
+    });
+
+    if (!collections.length) {
+        const noCollections = document.createElement("div");
+        noCollections.className = "empty-state";
+        noCollections.textContent = "No collections loaded yet.";
+        sidebar.appendChild(noCollections);
+    }
+
+    const selectionExists = [...select.options].some(
+        option => option.value === previousSelection
+    );
+
+    if (selectionExists) {
+        select.value = previousSelection;
+        selectedCollectionId = previousSelection;
+    } else {
+        select.value = "";
+        selectedCollectionId = "";
+    }
+}
+
+function openCreateCollection() {
+    showView("home");
+    selectImporter("instagram");
+    document.getElementById("instagramCollectionName").focus();
+}
+
+/* OAuth redirect feedback */
+
+function handleYouTubeConnectionStatus() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("youtube_connected") === "1") {
+        selectImporter("youtube");
+
+        showMessage(
+            "youtubeMessage",
+            "YouTube account connected. Paste a playlist URL and import it.",
+            "success"
+        );
+
+        params.delete("youtube_connected");
+
+        const query = params.toString();
+        const newUrl = window.location.pathname +
+            (query ? "?" + query : "") +
+            window.location.hash;
+
+        window.history.replaceState({}, "", newUrl);
+    }
+}
+
+/* Enter submits the question; Shift+Enter inserts a newline */
+
+document.getElementById("question").addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        askQuestion();
+    }
+});
+
+handleYouTubeConnectionStatus();
+loadCollections();
+</script>
+</body>
+</html>
